@@ -1,0 +1,47 @@
+name: Deploy Firebase Backend
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+  FIREBASE_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 }}
+
+jobs:
+  deploy:
+    name: Deploy Functions and Firestore rules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify deployment configuration
+        shell: bash
+        run: |
+          test -n "$FIREBASE_PROJECT_ID" || { echo "Missing repository variable FIREBASE_PROJECT_ID"; exit 1; }
+          test -n "$FIREBASE_SERVICE_ACCOUNT_JSON_BASE64" || { echo "Missing repository secret FIREBASE_SERVICE_ACCOUNT_JSON_BASE64"; exit 1; }
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install backend dependencies
+        working-directory: functions
+        run: npm install --ignore-scripts
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Restore Google Cloud service account
+        shell: bash
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON_BASE64" | base64 --decode > "$RUNNER_TEMP/firebase-service-account.json"
+          chmod 600 "$RUNNER_TEMP/firebase-service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
+
+      - name: Deploy backend
+        run: firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions,firestore:rules --non-interactive

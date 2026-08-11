@@ -1,0 +1,2 @@
+Download google-services.json from your Firebase project and place it in this app/ directory.
+Package name: com.twophone.smsbridge
