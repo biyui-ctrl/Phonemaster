@@ -11,7 +11,7 @@ Phonemaster is a personal two-phone Android SMS relay for devices you explicitly
 - Release builds use Play Integrity App Check; debug builds use Firebase's debug provider for development only.
 - Pairing codes expire after 10 minutes and lock after repeated failures.
 - Relay requests are idempotent and rate-limited.
-- Phone B stores encrypted message records and requires biometric/device-credential authentication before displaying plaintext history.
+- Phone B stores encrypted message records and requires biometric/device-credential authentication before displaying plaintext history. On a device that has no lock screen at all, and therefore cannot present a credential prompt, history is displayed without authentication and the receiver screen shows a persistent warning. Use a device with a lock screen if that matters to you.
 - Lock-screen notifications do not contain SMS/OTP text.
 - `FLAG_SECURE` blocks ordinary screenshots/screen recording of the app activity.
 - Firestore client access is deny-all; application access is server-mediated.

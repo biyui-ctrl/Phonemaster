@@ -166,6 +166,9 @@ class MainActivity : AppCompatActivity() {
         title("Phone B — receiver")
         text("Background delivery is enabled. Stored message bodies remain encrypted until you unlock history.")
         requestNotifications()
+        if (deviceCannotAuthenticate()) {
+            text("WARNING: this device has no lock screen, so message history cannot be protected. Anyone who opens this app can read relayed messages.")
+        }
         if (!unlocked) {
             button("Unlock message history") { authenticate() }
             button("Revoke pair and reset") { revokeAndReset() }
@@ -192,11 +195,41 @@ class MainActivity : AppCompatActivity() {
         button("Revoke pair and reset") { revokeAndReset() }
     }
 
+    /**
+     * True when the device can never satisfy an authentication prompt: no
+     * biometric hardware, no enrolled credential, or an unsupported platform.
+     * Deliberately excludes transient states such as HW_UNAVAILABLE, where a
+     * lock does exist and the prompt should still be required.
+     */
+    private fun deviceCannotAuthenticate(): Boolean {
+        val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or
+            BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        return when (BiometricManager.from(this).canAuthenticate(authenticators)) {
+            BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
+            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED,
+            BiometricManager.BIOMETRIC_STATUS_UNKNOWN,
+            BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED -> true
+            else -> false
+        }
+    }
+
     private fun authenticate() {
         val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or
             BiometricManager.Authenticators.DEVICE_CREDENTIAL
-        if (BiometricManager.from(this).canAuthenticate(authenticators) != BiometricManager.BIOMETRIC_SUCCESS) {
-            toast("Set a secure device lock first.")
+        val status = BiometricManager.from(this).canAuthenticate(authenticators)
+
+        if (status != BiometricManager.BIOMETRIC_SUCCESS) {
+            // Some devices (desktop Android runtimes, images without a lock
+            // screen) can never show a credential prompt. There is no lock to
+            // derive protection from, so history is shown unprotected and the
+            // user is told plainly. Transient failures still refuse.
+            if (deviceCannotAuthenticate()) {
+                unlocked = true
+                toast("No device lock on this device - history is NOT protected.")
+                render()
+            } else {
+                toast("Set a secure device lock first.")
+            }
             return
         }
         BiometricPrompt(this, ContextCompat.getMainExecutor(this), object : BiometricPrompt.AuthenticationCallback() {
