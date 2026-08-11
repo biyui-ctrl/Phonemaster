@@ -77,16 +77,21 @@ function bearerToken(req) {
 //
 // "enforce"  - reject any request without a valid App Check token (default).
 // "soft"     - verify when a token is present, allow the call when it is absent.
-//              Needed when Play Integrity cannot issue tokens (for example an
-//              app that is not distributed through Google Play). Weaker: the
-//              endpoints are then protected by Firebase Auth alone.
+// "off"      - skip App Check entirely, including tokens that fail to verify.
+//              Required when the app is not distributed through Google Play:
+//              Play Integrity still emits a token, but it cannot be validated,
+//              so "soft" is not enough. The endpoints are then protected by
+//              Firebase Auth plus the per-pair authorisation checks alone.
 function appCheckMode() {
-  return process.env.APP_CHECK_MODE === "soft" ? "soft" : "enforce";
+  const mode = process.env.APP_CHECK_MODE;
+  return mode === "soft" || mode === "off" ? mode : "enforce";
 }
 
 async function verifyAppCheck(req) {
-  const token = req.headers["x-firebase-appcheck"];
   const mode = appCheckMode();
+  if (mode === "off") return;
+
+  const token = req.headers["x-firebase-appcheck"];
 
   if (!token) {
     if (mode === "soft") return;

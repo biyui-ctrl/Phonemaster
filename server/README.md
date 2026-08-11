@@ -65,10 +65,11 @@ rather than producing a confusing runtime error.
 
 ## App Check enforcement
 
-Currently set to `soft` in `vercel.json`, because the app is sideloaded and Play
-Integrity cannot issue App Check tokens for a build Google Play has never seen.
-Change that value to `enforce` (or delete the entry) once the app is registered
-with Play.
+Currently set to `off` in `vercel.json`. The app is sideloaded, and Play
+Integrity cannot attest a build Google Play has never seen: it still emits an
+App Check token, but that token fails verification, so `soft` is not sufficient —
+only `off` gets past it. Set this back to `enforce` once the app is registered
+with Google Play (an internal testing track is enough).
 
 `APP_CHECK_MODE` controls how strictly App Check is applied:
 
@@ -76,6 +77,7 @@ with Play.
 |---|---|
 | `enforce` (default) | Reject any request without a valid App Check token. |
 | `soft` | Accept a request with no App Check token; still reject an invalid one. |
+| `off` | Skip App Check entirely, including tokens that fail verification. |
 
 `enforce` is the stronger setting and matches the original Cloud Functions
 behaviour. It requires App Check to be able to issue tokens for the installed
