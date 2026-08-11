@@ -2,6 +2,9 @@ package com.twophone.smsbridge
 
 import android.content.Context
 import android.util.Base64
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 object BridgeState {
     private const val PREFS = "bridge_state"
@@ -9,6 +12,8 @@ object BridgeState {
     private const val PAIR_ID = "pair_id"
     private const val WRAPPED_KEY = "wrapped_pair_key"
     private const val LAST_SEQ = "last_seq"
+    private const val DIAG_SMS = "diag_sms"
+    private const val DIAG_RELAY = "diag_relay"
 
     const val ROLE_SOURCE = "source"
     const val ROLE_RECEIVER = "receiver"
@@ -45,6 +50,25 @@ object BridgeState {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putLong(LAST_SEQ, value).apply()
     }
+
+    // Diagnostics. The relay runs entirely in the background, so without these
+    // a failure is invisible: the message simply never appears on Phone B.
+    private fun stamp(): String =
+        SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+
+    fun noteSms(context: Context, value: String) =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putString(DIAG_SMS, "${stamp()}  $value").apply()
+
+    fun smsDiagnostic(context: Context): String? =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(DIAG_SMS, null)
+
+    fun noteRelay(context: Context, value: String) =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putString(DIAG_RELAY, "${stamp()}  $value").apply()
+
+    fun relayDiagnostic(context: Context): String? =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(DIAG_RELAY, null)
 
     fun clear(context: Context) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()

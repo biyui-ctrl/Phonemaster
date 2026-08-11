@@ -29,6 +29,7 @@ class RelayWorker(
         val timestamp = inputData.getLong("timestamp", System.currentTimeMillis())
 
         return try {
+            BridgeState.noteRelay(applicationContext, "relay started")
             FirebaseSession.ensureSignedIn()
             val encrypted = Crypto.encrypt(
                 key,
@@ -45,8 +46,10 @@ class RelayWorker(
                     )
                 )
                 .await()
+            BridgeState.noteRelay(applicationContext, "delivered to server OK")
             Result.success()
         } catch (e: FirebaseFunctionsException) {
+            BridgeState.noteRelay(applicationContext, "server rejected: ${e.code} ${e.message}")
             when (e.code) {
                 FirebaseFunctionsException.Code.PERMISSION_DENIED,
                 FirebaseFunctionsException.Code.NOT_FOUND,
@@ -54,7 +57,8 @@ class RelayWorker(
                 FirebaseFunctionsException.Code.UNAUTHENTICATED -> Result.failure()
                 else -> Result.retry()
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            BridgeState.noteRelay(applicationContext, "failed: ${e.javaClass.simpleName} ${e.message}")
             Result.retry()
         }
     }

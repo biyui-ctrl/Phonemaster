@@ -158,6 +158,11 @@ class MainActivity : AppCompatActivity() {
                 render()
             }
         }
+        title("Relay diagnostics")
+        text("Last SMS: ${BridgeState.smsDiagnostic(this) ?: "none seen since install"}")
+        text("Last relay: ${BridgeState.relayDiagnostic(this) ?: "none attempted"}")
+        button("Refresh diagnostics") { render() }
+
         button("Check Phone B status") { checkStatus() }
         button("Revoke pair and reset") { revokeAndReset() }
     }
