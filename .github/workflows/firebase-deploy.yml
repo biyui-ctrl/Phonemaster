@@ -1,4 +1,4 @@
-name: Deploy Firebase Backend
+name: Deploy Firestore Rules
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ env:
 
 jobs:
   deploy:
-    name: Deploy Functions and Firestore rules
+    name: Deploy Firestore rules
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,10 +29,6 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install backend dependencies
-        working-directory: functions
-        run: npm install --ignore-scripts
-
       - name: Install Firebase CLI
         run: npm install --global firebase-tools
 
@@ -43,5 +39,5 @@ jobs:
           chmod 600 "$RUNNER_TEMP/firebase-service-account.json"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
 
-      - name: Deploy backend
-        run: firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions,firestore:rules --non-interactive
+      - name: Deploy Firestore rules
+        run: firebase deploy --project "$FIREBASE_PROJECT_ID" --only firestore:rules --non-interactive

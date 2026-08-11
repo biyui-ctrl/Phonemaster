@@ -6,7 +6,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.google.firebase.functions.FirebaseFunctions
+import com.twophone.smsbridge.Api
 import com.twophone.smsbridge.BridgeState
 import com.twophone.smsbridge.FirebaseSession
 import com.twophone.smsbridge.MessageStore
@@ -51,8 +51,7 @@ class BridgeMessagingService : FirebaseMessagingService() {
         CoroutineScope(Dispatchers.IO).launch {
             runCatching {
                 FirebaseSession.ensureSignedIn()
-                FirebaseFunctions.getInstance()
-                    .getHttpsCallable("registerReceiverToken")
+                Api.callable("registerReceiverToken")
                     .call(mapOf("pairId" to pairId, "token" to token))
                     .await()
             }

@@ -10,6 +10,7 @@ permissions:
 
 env:
   GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+  PHONEMASTER_API_BASE_URL: ${{ vars.PHONEMASTER_API_BASE_URL }}
 
 jobs:
   backend-checks:
@@ -24,13 +25,16 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: functions/package.json
+          cache-dependency-path: server/package.json
 
-      - name: Validate Cloud Functions JavaScript
-        run: node --check functions/index.js
+      - name: Validate API JavaScript
+        run: |
+          for file in server/api/*.js server/lib/*.js; do
+            node --check "$file"
+          done
 
-      - name: Install Cloud Functions dependencies
-        working-directory: functions
+      - name: Install API dependencies
+        working-directory: server
         run: npm install --ignore-scripts
 
   android-build:

@@ -18,6 +18,14 @@ android {
         versionName = "0.2.0-secure"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Base URL of the self-hosted callable endpoints, without a trailing
+        // slash. Override per build with -PphonemasterApiBaseUrl=... or the
+        // PHONEMASTER_API_BASE_URL environment variable.
+        val apiBaseUrl = (project.findProperty("phonemasterApiBaseUrl") as String?)
+            ?: System.getenv("PHONEMASTER_API_BASE_URL")
+            ?: ""
+        buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.trimEnd('/')}\"")
     }
 
     buildFeatures {

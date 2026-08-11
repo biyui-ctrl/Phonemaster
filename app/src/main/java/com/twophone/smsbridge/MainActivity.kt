@@ -15,7 +15,6 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.work.*
-import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,7 +26,6 @@ import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
     private lateinit var root: LinearLayout
-    private val functions by lazy { FirebaseFunctions.getInstance() }
     private var oneTimeBundle: String? = null
     private var unlocked = false
 
@@ -85,7 +83,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 FirebaseSession.ensureSignedIn()
                 @Suppress("UNCHECKED_CAST")
-                val data = functions.getHttpsCallable("startPair").call().await().data as Map<String, Any?>
+                val data = Api.callable("startPair").call().await().data as Map<String, Any?>
                 val pairId = data["pairId"] as String
                 val joinCode = data["joinCode"] as String
                 val key = Crypto.newPairKey()
@@ -114,7 +112,7 @@ class MainActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 try {
                     FirebaseSession.ensureSignedIn()
-                    functions.getHttpsCallable("joinPair")
+                    Api.callable("joinPair")
                         .call(mapOf("pairId" to bundle.pairId, "joinCode" to bundle.joinCode))
                         .await()
                     BridgeState.setPair(
@@ -218,7 +216,7 @@ class MainActivity : AppCompatActivity() {
     private suspend fun registerReceiverToken() {
         val pairId = BridgeState.pairId(this) ?: return
         val token = FirebaseMessaging.getInstance().token.await()
-        functions.getHttpsCallable("registerReceiverToken")
+        Api.callable("registerReceiverToken")
             .call(mapOf("pairId" to pairId, "token" to token)).await()
     }
 
@@ -250,7 +248,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 @Suppress("UNCHECKED_CAST")
-                val data = functions.getHttpsCallable("pairStatus")
+                val data = Api.callable("pairStatus")
                     .call(mapOf("pairId" to pairId)).await().data as Map<String, Any?>
                 toast(if (data["joined"] == true) "Phone B is paired." else "Waiting for Phone B.")
             } catch (e: Exception) {
@@ -263,7 +261,7 @@ class MainActivity : AppCompatActivity() {
         val pairId = BridgeState.pairId(this)
         lifecycleScope.launch {
             if (pairId != null) runCatching {
-                functions.getHttpsCallable("revokePair").call(mapOf("pairId" to pairId)).await()
+                Api.callable("revokePair").call(mapOf("pairId" to pairId)).await()
             }
             MessageStore(this@MainActivity).clearAll()
             BridgeState.clear(this@MainActivity)

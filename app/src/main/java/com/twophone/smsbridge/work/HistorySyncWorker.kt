@@ -3,7 +3,6 @@ package com.twophone.smsbridge.work
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
 import com.twophone.smsbridge.*
 import kotlinx.coroutines.tasks.await
@@ -22,8 +21,7 @@ class HistorySyncWorker(
 
         return try {
             FirebaseSession.ensureSignedIn()
-            val result = FirebaseFunctions.getInstance()
-                .getHttpsCallable("getMessages")
+            val result = Api.callable("getMessages")
                 .call(
                     mapOf(
                         "pairId" to pairId,

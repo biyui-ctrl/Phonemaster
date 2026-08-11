@@ -3,8 +3,8 @@ package com.twophone.smsbridge.work
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
+import com.twophone.smsbridge.Api
 import com.twophone.smsbridge.BridgeState
 import com.twophone.smsbridge.Crypto
 import com.twophone.smsbridge.FirebaseSession
@@ -34,8 +34,7 @@ class RelayWorker(
                 key,
                 SmsPayload(sender, body, timestamp)
             )
-            FirebaseFunctions.getInstance()
-                .getHttpsCallable("relaySms")
+            Api.callable("relaySms")
                 .call(
                     mapOf(
                         "pairId" to pairId,

@@ -21,6 +21,17 @@ Phonemaster is a personal two-phone Android SMS relay for devices you explicitly
 
 Android platform protections can restrict access to certain OTP-formatted SMS messages on newer Android versions. Phonemaster does not bypass Android permissions or OTP protections.
 
+## Backend hosting
+
+The API endpoints are self-hosted serverless functions in `server/`, not Firebase
+Cloud Functions, so the Firebase project can stay on the free Spark plan. They
+speak the Firebase callable protocol and still require a Firebase Auth ID token
+and (by default) an App Check token. Firestore, Authentication, Cloud Messaging
+and App Check are unchanged. See `server/README.md` for deployment.
+
+The legacy Cloud Functions implementation is retained in `functions/` for
+reference and is no longer deployed.
+
 ## Firebase setup
 
 Register Android package `com.twophone.smsbridge`, enable Anonymous Authentication, create Firestore, enable Cloud Functions/FCM, and configure Firebase App Check. Never commit `google-services.json` or service-account credentials.
