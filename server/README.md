@@ -65,6 +65,11 @@ rather than producing a confusing runtime error.
 
 ## App Check enforcement
 
+Currently set to `soft` in `vercel.json`, because the app is sideloaded and Play
+Integrity cannot issue App Check tokens for a build Google Play has never seen.
+Change that value to `enforce` (or delete the entry) once the app is registered
+with Play.
+
 `APP_CHECK_MODE` controls how strictly App Check is applied:
 
 | Value | Behaviour |
