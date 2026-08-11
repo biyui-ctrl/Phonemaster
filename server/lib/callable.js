@@ -118,9 +118,41 @@ async function verifyUid(req) {
   }
 }
 
+// The callable protocol does not put 64-bit integers on the wire as plain JSON
+// numbers, because JSON cannot represent the full int64 range safely. It wraps
+// them:
+//   {"@type": "type.googleapis.com/google.protobuf.Int64Value", "value": "123"}
+// Firebase's own Cloud Functions SDK unwraps these before the handler runs, so
+// handlers ported from it must do the same or every Long arrives as an object.
+const INT64_TYPES = new Set([
+  "type.googleapis.com/google.protobuf.Int64Value",
+  "type.googleapis.com/google.protobuf.UInt64Value",
+]);
+
+function decodeWireValue(value) {
+  if (value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map(decodeWireValue);
+
+  if (INT64_TYPES.has(value["@type"])) {
+    const parsed = Number(value.value);
+    if (!Number.isFinite(parsed)) {
+      throw new HttpsError("invalid-argument", "Invalid numeric value.");
+    }
+    return parsed;
+  }
+
+  const decoded = {};
+  for (const [key, item] of Object.entries(value)) {
+    decoded[key] = decodeWireValue(item);
+  }
+  return decoded;
+}
+
 function parseData(req) {
   const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-  if (body && typeof body === "object" && "data" in body) return body.data ?? {};
+  if (body && typeof body === "object" && "data" in body) {
+    return decodeWireValue(body.data ?? {});
+  }
   return {};
 }
 
@@ -138,6 +170,7 @@ function callable(handler) {
       try {
         data = parseData(req);
       } catch (error) {
+        if (error instanceof HttpsError) throw error;
         throw new HttpsError("invalid-argument", "Request body must be JSON.");
       }
 
